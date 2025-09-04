@@ -38,6 +38,13 @@
             border-radius: 5px;
             box-shadow: 2px 4px 8px rgba(0,0.2,0,0.5);
         }
+        #zoom {
+            padding: 10px;
+            background: rgba(241, 242, 243, 0.736);
+            text-align: left;
+            border-radius: 5px;
+            box-shadow: 2px 4px 8px rgba(0,0.2,0,0.5);
+        }
     </style>
 </head>
 <body>
@@ -71,6 +78,22 @@
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19
         }).addTo(map);
+
+        const ZoomViewer = L.Control.extend({
+            options: {
+                position: 'bottomleft' // Specify the desired position
+            },
+            onAdd() {
+                const ZoomDiv = L.DomUtil.create('div');
+                ZoomDiv.id = 'zoom';
+                map.on('zoomstart zoom zoomend', (ev) => {
+                    ZoomDiv.innerHTML = `Zoom level: ${map.getZoom()}`;
+                });
+                return ZoomDiv;
+            }
+        });
+
+        const zoomViewer = (new ZoomViewer()).addTo(map);
 
         // Set initial view to user's location if possible
         if (navigator.geolocation) {
