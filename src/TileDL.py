@@ -58,6 +58,11 @@ else:
 # Global event for cancellation
 download_event = threading.Event()
 
+tile_count = 0
+tile_download_count = 0
+tile_skip_count = 0
+tile_failed_count = 0
+
 def sanitize_style_name(style_name):
     """Convert map style name to a filesystem-safe directory name."""
     style_name = re.sub(r'\s+', '-', style_name)  # Replace spaces with hyphens
@@ -71,6 +76,7 @@ def get_style_cache_dir(style_name):
 
 def download_tile(tile, map_style, style_cache_dir, convert_to_8bit, max_retries=3):
     """Download a single tile with retries if not cancelled and not in cache, converting to 8-bit if specified."""
+    global tile_download_count, tile_skip_count, tile_failed_count
     if not download_event.is_set():
         return None
     tile_dir = style_cache_dir / str(tile.z) / str(tile.x)
@@ -83,6 +89,7 @@ def download_tile(tile, map_style, style_cache_dir, convert_to_8bit, max_retries
             'east': bounds.east,
             'north': bounds.north
         })
+        tile_skip_count += 1
         return tile_path
     subdomain = random.choice(['a', 'b', 'c']) if '{s}' in map_style else ''
     url = map_style.replace('{s}', subdomain).replace('{z}', str(tile.z)).replace('{x}', str(tile.x)).replace('{y}', str(tile.y))
@@ -106,6 +113,7 @@ def download_tile(tile, map_style, style_cache_dir, convert_to_8bit, max_retries
                     'east': bounds.east,
                     'north': bounds.north
                 })
+                tile_download_count += 1
                 return tile_path
             else:
                 time.sleep(2 ** attempt)  # Exponential backoff
@@ -114,6 +122,7 @@ def download_tile(tile, map_style, style_cache_dir, convert_to_8bit, max_retries
     socketio.emit('tile_failed', {
         'tile': f"{tile.z}/{tile.x}/{tile.y}"
     })
+    tile_failed_count += 1
     return None
 
 def get_world_tiles():
@@ -143,7 +152,9 @@ def get_tiles_for_polygons(polygons_data, min_zoom, max_zoom):
 
 def download_tiles_with_retries(tiles, map_style, style_cache_dir, convert_to_8bit):
     """Download tiles with efficient retries using parallelism and adaptive backoff."""
-    socketio.emit('download_started', {'total_tiles': len(tiles)})
+    global tile_count
+    tile_count += len(tiles)
+    socketio.emit('download_started', {'total_tiles': tile_count})
     retry_queue = []
     max_workers = 5
     batch_size = 10
@@ -191,6 +202,16 @@ def index():
 def get_map_sources():
     """Return the list of map sources from the config file."""
     return jsonify(MAP_SOURCES)
+
+@socketio.on('sync_request')
+def sync_request():
+    global tile_count, tile_download_count, tile_skip_count, tile_failed_count
+    socketio.emit('sync_stats', {
+        'total_tiles': tile_count,
+        'tiles_downloaded': tile_download_count,
+        'tiles_skipped': tile_skip_count,
+        'tiles_failed': tile_failed_count
+    })
 
 @socketio.on('start_download')
 def handle_start_download(data):

@@ -352,6 +352,20 @@
         var skippedTiles = 0;
         var failedTiles = 0;
 
+        socket.emit('sync_request');
+
+        socket.on('sync_stats', function(data){
+            totalTiles = data.total_tiles;
+            if (totalTiles != 0){
+                downloadedTiles = data.tiles_downloaded;
+                skippedTiles = data.tiles_skipped;
+                failedTiles = data.tiles_failed;
+                downloadProgressLayer.clearLayers();
+                document.getElementById('cancelBtn').disabled = false;
+                updateProgress();
+            }
+        })
+
         socket.on('download_started', function(data) {
             totalTiles = data.total_tiles;
             downloadedTiles = 0;
