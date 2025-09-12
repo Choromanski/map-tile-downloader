@@ -132,7 +132,7 @@ def get_world_tiles():
         for x in range(2**z):
             for y in range(2**z):
                 tiles.append(mercantile.Tile(x, y, z))
-                emit('tile_calculation')
+                socketio.emit('tile_calculation')
     return tiles
 
 def get_tiles_for_polygons(polygons_data, min_zoom, max_zoom):
@@ -148,7 +148,7 @@ def get_tiles_for_polygons(polygons_data, min_zoom, max_zoom):
             tile_box = box(tile_bbox.west, tile_bbox.south, tile_bbox.east, tile_bbox.north)
             if any(tile_box.intersects(poly) for poly in polygons):
                 all_tiles.append(tile)
-                emit('tile_calculation')
+                socketio.emit('tile_calculation')
     all_tiles.sort(key=lambda tile: (tile.z, -tile.x, tile.y))
     return all_tiles
 
