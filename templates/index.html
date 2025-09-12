@@ -351,6 +351,7 @@
         var downloadedTiles = 0;
         var skippedTiles = 0;
         var failedTiles = 0;
+        var tileCalculation = 0;
 
         socket.emit('sync_request');
 
@@ -364,6 +365,11 @@
                 document.getElementById('cancelBtn').disabled = false;
                 updateProgress();
             }
+        })
+
+        socket.on('tile_calculation', function(data) {
+            tileCalculation++;
+            document.getElementById('progress').innerHTML = `Calculating Tiles To Download... ${tileCalculation}`;
         })
 
         socket.on('download_started', function(data) {
