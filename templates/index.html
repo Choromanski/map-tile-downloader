@@ -369,7 +369,7 @@
 
         socket.on('tile_calculation', function(data) {
             tileCalculation++;
-            document.getElementById('progress').innerHTML = `Calculating Tiles To Download... ${tileCalculation}`;
+            document.getElementById('progress').innerHTML = `Calculating Tiles To Download: ${tileCalculation.toLocaleString()}`;
         })
 
         socket.on('download_started', function(data) {
@@ -429,7 +429,7 @@
 
         function updateProgress() {
             var progress = ((downloadedTiles + skippedTiles + failedTiles) / totalTiles * 100).toFixed(2);
-            var progressText = `Progress: ${progress}% (${downloadedTiles} downloaded, ${skippedTiles} skipped, ${failedTiles} failed / ${totalTiles})`;
+            var progressText = `Progress: ${progress}% (${downloadedTiles.toLocaleString()} downloaded, ${skippedTiles.toLocaleString()} skipped, ${failedTiles.toLocaleString()} failed / ${totalTiles.toLocaleString()})`;
             document.getElementById('progress').innerHTML = progressText;
         }
     </script>
